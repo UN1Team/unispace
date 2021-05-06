@@ -1,0 +1,147 @@
+html {
+  font-size: 15px;
+}
+
+body {
+  margin: 0;
+  font-family: "Oswald", sans-serif;
+  font-size: 15px;
+  color: #F2F2F2;
+  background: linear-gradient(180deg, #0b0b0c 0, #131318 100%) no-repeat;
+  height: 100vh;
+}
+
+body.no-scroll {
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  outline: none;
+  color: inherit;
+}
+
+.container {
+  max-width: 1550px;
+  margin: auto;
+}
+
+.title h1 {
+  font-size: 40px;
+  font-weight: 500;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+.welcome {
+  position: fixed;
+  text-align: center;
+  left: calc(50vw - 215px);
+  top: calc(50vh - 100px);
+  max-width: 600px;
+}
+
+@media (max-width: 431px) {
+  .welcome {
+    left: 0;
+    top: 0;
+    margin: 10px;
+  }
+}
+.brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  cursor: context-menu;
+}
+
+.brand .name {
+  font-family: "Poiret One";
+  font-size: 60px;
+  font-weight: 600;
+}
+
+.brand .topic {
+  font-family: "Fira Sans";
+  font-size: 24px;
+  font-weight: 200;
+  margin-bottom: 20px;
+}
+
+.title {
+  cursor: context-menu;
+  text-align: center;
+}
+
+h2.title {
+  font-size: 30px;
+  font-weight: 400;
+}
+
+h3.title {
+  font-family: "Fira Sans";
+  font-size: 20px;
+  font-weight: 200;
+}
+
+.notification__form {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.notification__form * {
+  margin: 10px 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.notification__form input {
+  outline: none;
+  border: none;
+  width: 100%;
+  height: 35px;
+  color: #1D2124;
+  background-color: #F2F2F2;
+  padding: 0 5px;
+  font-size: 20px;
+  transition: all 0.2s linear;
+  border: 2px solid #00A6DF;
+}
+
+.notification__form input:hover, .notification__form input:active, .notification__form input:focus {
+  border-color: #FE9900;
+}
+
+.notification__form button {
+  padding: 0;
+  border: none;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  font-family: "Fira Sans";
+  font-size: 17px;
+  padding: 10px;
+  background-color: transparent;
+  border: 2px solid #00A6DF;
+}
+
+.notification__form button:hover, .notification__form button:active, .notification__form button:focus {
+  border-color: #FE9900;
+  background-color: #FE9900;
+  color: #1D2124;
+}
