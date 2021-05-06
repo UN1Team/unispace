@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Database\QueryException as QueryException;
+use App\Http\Controllers\DatabaseCommandController as DatabaseCommandController;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -34,6 +36,9 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
+        $this->reportable(function (QueryException $e){
+            die(DatabaseCommandController::Answer('', $e->errorInfo[2]));
+        });
         $this->reportable(function (Throwable $e) {
             //
         });
