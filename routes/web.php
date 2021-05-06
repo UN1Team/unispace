@@ -14,5 +14,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('index');
+})->name('index');
+
+Route::get('/console', function() {
+    return view('console');
+})->name('console');
+
+Route::post('/api/dbcommand', 'App\Http\Controllers\DatabaseCommandController@Command')->name('console__dbcommand');
+
+Route::get('/bot', 'App\Http\Controllers\BotController@Submit')->name('bot-vk');
+
