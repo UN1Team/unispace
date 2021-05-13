@@ -12,7 +12,7 @@
 <body>
     <section class="welcome">
         <div class="brand">
-            <span class="name">UNISpace</span>
+            <span class="name">UNISpace 2.0</span>
             <span class="topic">рабочий стол студента</span>
         </div>
         <h2 class="title">Мы можем оповестить тебя во время релиза!</h2>
