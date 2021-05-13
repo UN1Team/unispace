@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-require_once "../../../vendor/digitalstars/autoload.php";
+require_once('simplevk-master/autoload.php');
 
 use DigitalStar\vk_api\vk_api; // Основной класс
 use DigitalStar\vk_api\Coin; // работа с vkcoins
@@ -35,13 +35,9 @@ class BotController extends Controller
         else{
             $dbUser = DB::table('vkusers')->WHERE('vkid', $data['object']['from_id']);
             if($dbUser->exists() && $dbUser->value('isFirstMessage') == false){
-                $isFio_message = new Message($vk);
-                $isFio_message->setMessage("Тебя зовут ".$message."?");
                 $yesFio_button = $vk->buttonText('Да', 'green', ['command' => 'yesFio']);
                 $noFio_button = $vk->buttonText('Нет', 'red', ['command' => 'noFio']);
-                //$keyboard = $vk->generateKeyboard([[$yesFio_button], [$noFio_button], true])
-                $isFio_message->setKeyboard([$yesFio_button, $noFio_button], true, true);
-                $isFio_message->send($id);
+                $vk->sendButton($id, "Тебя зовут ".$message."?", [[$yesFio_button], [$noFio_button]]);
             } else{
                 $vk->sendMessage($id, "Привет!\n\nЯ твой персональный бот-помощник по учёбе.\nЯ буду тебя информировать о заданиях с их сроками сдачи и о том, что творится в тоей учебной жизни!\n\nХочешь узнать подробнее?\nНапиши своё Имя и Фамилию.");
                 $dbUser->update(['isFirstMessage' => false]);
