@@ -12,8 +12,8 @@
 <body>
     <section class="welcome">
         <div class="brand">
-            <span class="name">UNISpace 2.0</span>
-            <span class="topic">рабочий стол студента</span>
+            <span class="name">UNISpace</span>
+            <span class="topic">а как какать</span>
         </div>
         <h2 class="title">Мы можем оповестить тебя во время релиза!</h2>
         <h3 class="title">просто введи id профиля ВК или ссылку на него</h3>
