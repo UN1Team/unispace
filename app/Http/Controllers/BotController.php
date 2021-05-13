@@ -25,12 +25,24 @@ class BotController extends Controller
     public function Submit(){
         $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
         $vk->debug();
-        $vk->initVars($id, $message, $payload); //инициализация переменных
-        $info_btn = $vk->buttonText('Информация', 'blue', ['command' => 'info']); //создание кнопки
-        if ($payload) {
-            if($payload['command'] == 'info')
-                $vk->reply('Тебя зовут %a_full%'); //отвечает пользователю или в беседу
-        } else
-            $vk->sendButton($id, 'Тестовая кнопка', [[$info_btn]]); //отправляем клавиатуру с сообщением
+        $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
+        if(in_array("action", $data['object']) && $data['object']['action']['type'] == 'chat_invite_user'){
+            $vk->sendMessage($id, "//Вступительный текст для бесед");
+        }
+        if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){
+            $vk->sendMessage($id, "Ты уже находишься в нашей БД, поздравляю.");
+        }
+        else{
+            if(DB::table('vkusers')->WHERE('vkid', $data['object']['from_id'])->exists()){
+                $isFio_message = new Message($vk);
+                $isFio_message->setMessage("Тебя зовут ".$message."?");
+                $yesFio_button = $vk->buttonText('Да', 'green', ['command' => 'yesFio']);
+                $noFio_button = $vk->buttonText('Нет', 'red', ['command' => 'noFio']);
+                //$keyboard = $vk->generateKeyboard([[$yesFio_button], [$noFio_button], true])
+                $isFio_message->setKeyboard([$yesFio_button, $noFio_button], true, true);
+                $isFio_message->send($id);
+            } else
+                $vk->sendMessage($id, "Привет!\n\nЯ твой персональный бот-помощник по учёбе.\nЯ буду тебя информировать о заданиях с их сроками сдачи и о том, что творится в тоей учебной жизни!\n\nХочешь узнать подробнее?\nНапиши своё Имя и Фамилию.");
+        }
     }
 }
