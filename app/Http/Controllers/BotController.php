@@ -29,15 +29,12 @@ class BotController extends Controller
         if($data->object->action->type == 'chat_invite_user'){
             $vk->sendMessage($id, "//Вступительный текст для бесед");
         }
-        if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){
-            $vk->sendMessage($id, "Ты уже находишься в нашей БД, поздравляю.");
-        }
+        //if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){
+        //    $vk->sendMessage($id, "Ты уже находишься в нашей БД, поздравляю.");
+        //}
         else{
             $dbUser = DB::table('vkusers')->WHERE('vkid', $data['object']['from_id']);
-            if($payload){
-                if()
-            }
-            else if($dbUser->exists() && $dbUser->value('isFirstMessage') == false){
+            if($dbUser->exists() && $dbUser->value('isFirstMessage') == false){
                 $isFio_message = new Message($vk);
                 $isFio_message->setMessage("Тебя зовут ".$message."?");
                 $yesFio_button = $vk->buttonText('Да', 'green', ['command' => 'yesFio']);
