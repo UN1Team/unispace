@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-require_once "vendor/autoload.php";
+require_once "../../../vendor/autoload.php";
 
 use DigitalStar\vk_api\vk_api; // Основной класс
 use DigitalStar\vk_api\Coin; // работа с vkcoins
