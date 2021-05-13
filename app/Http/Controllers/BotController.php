@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-require_once "vendor/autoload.php";
+require_once "../../../vendor/digitalstars/autoload.php";
 
 use DigitalStar\vk_api\vk_api; // Основной класс
 use DigitalStar\vk_api\Coin; // работа с vkcoins
@@ -26,12 +26,12 @@ class BotController extends Controller
         $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
         $vk->debug();
         $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
-        if($data->object->action->type == 'chat_invite_user'){
-            $vk->sendMessage($id, "//Вступительный текст для бесед");
-        }
-        //if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){
-        //    $vk->sendMessage($id, "Ты уже находишься в нашей БД, поздравляю.");
+        //if(in_array("action", $data['object']) && $data['object']['action']['type'] == 'chat_invite_user'){
+        //    $vk->sendMessage($id, "//Вступительный текст для бесед");
         //}
+        if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){
+            $vk->sendMessage($id, "Ты уже находишься в нашей БД, поздравляю.");
+        }
         else{
             $dbUser = DB::table('vkusers')->WHERE('vkid', $data['object']['from_id']);
             if($dbUser->exists() && $dbUser->value('isFirstMessage') == false){
