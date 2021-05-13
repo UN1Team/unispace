@@ -26,7 +26,7 @@ class BotController extends Controller
         $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
         $vk->debug();
         $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
-        //if(in_array("action", $data['object']) && $data['object']['action']['type'] == 'chat_invite_user'){
+        //if($data->object->action->type == 'chat_invite_user'){
         //    $vk->sendMessage($id, "//Вступительный текст для бесед");
         //}
         if(DB::table('users')->where('vkid', $data['object']['from_id'])->exists()){

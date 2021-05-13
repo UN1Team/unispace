@@ -1,5 +1,21 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| This is an example file for database setting (database.php)
+|--------------------------------------------------------------------------
+|
+| We, UN1Team, can not publish username and password to our non-local database
+| beacuse of security reasons. Original database.php file is ignored by git
+|
+| If you are bringing up a copy of unispace, make sure you have a proper
+| /config/database.php file and a valid database to work with
+|
+| Don't forget to specify the information about the database in /.env
+| file as well
+| 
+*/
+
 use Illuminate\Support\Str;
 
 return [
