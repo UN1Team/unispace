@@ -19,18 +19,18 @@ use Illuminate\Support\Facades\DB;
 
 define("VK_KEY", "ee9d69070a3121558dc8e9f16b72c3fd10ea6aeaca5a954eccfc7e0e7ead0b8748eca9b9fbc6ed091ecac");
 define("VERSION", "5.101");
-define("CONFIRM_STR", "0e589e51");
+define("CONFIRM_STR", "665ae444");
 
 class BotController extends Controller
 {
-    $vk;
-    $id;
-    $message;
-    $payload;
-    $user_id;
-    $type;
-    $data;
-    $dbUser;
+    private $vk;
+    private $id;
+    private $message;
+    private $payload;
+    private $user_id;
+    private $type;
+    private $data;
+    private $dbUser;
 
     public function Submit(){
         global $vk, $id, $message, $payload, $user_id, $type, $data, $dbUser;
