@@ -97,3 +97,5 @@
  ./README.MD - этот файл README
   <br>
  ./LICENSE.MD - файл с лицензией
+  <br>
+ ./report.docx - отчёт по проекту
