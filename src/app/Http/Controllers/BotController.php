@@ -19,27 +19,32 @@ use Illuminate\Support\Facades\DB;
 
 define("VK_KEY", "ee9d69070a3121558dc8e9f16b72c3fd10ea6aeaca5a954eccfc7e0e7ead0b8748eca9b9fbc6ed091ecac");
 define("VERSION", "5.101");
-define("CONFIRM_STR", "0e589e51");
+define("CONFIRM_STR", "665ae444");
 
 class BotController extends Controller
 {
-    $vk;
-    $id;
-    $message;
-    $payload;
-    $user_id;
-    $type;
-    $data;
-    $dbUser;
+    private $vk;
+    private $id;
+    private $message;
+    private $payload;
+    private $user_id;
+    private $type;
+    private $data;
+    private $dbUser;
 
     public function Submit(){
         global $vk, $id, $message, $payload, $user_id, $type, $data, $dbUser;
 
+        $logsTable = DB::table('logs');
+        $logsTable->insert(['title' => 'Bot', 'text' => 'submit started']);
         $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
+        $logsTable->insert(['title' => 'Bot', 'text' => 'vk created']);
         $vk->debug();
         $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
+        $logsTable->insert(['title' => 'Bot', 'text' => 'initVars']);
 
         $dbUser = DB::table('vkusers')->WHERE('vkid', $data->object->from_id);
+        $logsTable->insert(['title' => 'Bot', 'text' => 'get user from db']);
 
         if(isset($data->object->action->type) && $data->object->action->type == 'chat_invite_user'){
             $vk->sendMessage($id, "//Вступительный текст для бесед");
@@ -58,8 +63,10 @@ class BotController extends Controller
                     break;
             }
         }
-        else
+        else{
+            $logsTable->insert(['title' => 'Bot', 'text' => 'go to FIOAuth()']);
             FIOAuth();
+        }
     }
 
     private function ProcessAddInfoStage(){
@@ -160,6 +167,8 @@ class BotController extends Controller
     private function FIOAuth(){
         global $vk, $id, $message, $payload, $user_id, $type, $data, $dbUser;
 
+        $logsTable = DB::table('logs');
+        $logsTable->insert(['title' => 'Bot', 'text' => 'FIOAuth()']);
         if($payload){
             if($command == 'yesFio'){
                 $currentFio = $dbUser->value('tempFio');
@@ -182,7 +191,9 @@ class BotController extends Controller
             $dbUser->update(['tempFio' => $message]);
         }
         else {
+            $logsTable->insert(['title' => 'Bot', 'text' => 'else statement before sendMessage in FIOAuth()']);
             $vk->sendMessage($id, "Привет!\n\nЯ твой персональный бот-помощник по учёбе.\nЯ буду тебя информировать о заданиях с их сроками сдачи и о том, что творится в тоей учебной жизни!\n\nХочешь узнать подробнее?\nНапиши своё Имя и Фамилию.");
+            $logsTable->insert(['title' => 'Bot', 'text' => 'message sent']);
             $dbUser->update(['stage' => "Fio"]);
         }
     }
