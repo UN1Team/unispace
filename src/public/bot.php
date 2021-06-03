@@ -15,7 +15,7 @@ use Anemon\LazyPHP\DB;
 
 define("VK_KEY", "ee9d69070a3121558dc8e9f16b72c3fd10ea6aeaca5a954eccfc7e0e7ead0b8748eca9b9fbc6ed091ecac");
 define("VERSION", "5.101");
-define("CONFIRM_STR", "665ae444");
+define("CONFIRM_STR", "b6e82dd8");
 
 $vk;
 $id;
