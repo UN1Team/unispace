@@ -2,12 +2,6 @@
     "name": "uniteam/unispace",
     "type": "project",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "coca-in-a-cola",
-            "email": "coca-in-a-cola@protonmail.com"
-        }
-    ],
     "require": {
         "digitalstars/simplevk": "^2.14"
     }

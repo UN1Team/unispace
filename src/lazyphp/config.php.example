@@ -1,0 +1,17 @@
+<?php
+
+//MAIN
+define("MAIN_URL", "http://unispace.ai-info.ru");
+define("MAIN_NAME", "UNISpace");
+
+//DATABASE
+define("DB_TYPE", "pgsql");
+define("DB_HOST", "localhost");
+define("DB_NAME", "postgres");
+define("DB_LOGIN", "postgres");
+define("DB_PASSWORD", "postgres");
+
+//LOGS
+define("LOG_ANY", true);
+define("LOG_ALL", true);
+define("LOG_PATH", $_SERVER['DOCUMENT_ROOT']."/lazyphp/logs/");
