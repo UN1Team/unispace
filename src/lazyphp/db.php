@@ -22,6 +22,7 @@ class DB {
                 LAZY_DB_LOGIN, LAZY_DB_PASSWORD,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
             );
+            Log::Normal("DB Connection", "Succesfully connected to DB", __FILE__."-".__LINE__." line");
         } catch (PDOException $e){
             Log::Error("DB Connection", $e->getMessage(), __FILE__."-".__LINE__." line");
             throw new Exception(__FILE__."-".__LINE__." line. "."DB Connection error: ".$e->getMessage());

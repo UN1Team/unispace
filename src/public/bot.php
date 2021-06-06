@@ -1,6 +1,7 @@
 <?php
 require_once("../vendor/digitalstars/simplevk/autoload.php");
 require_once("../lazyphp/db.php");
+require_once("../lazyphp/log.php");
 
 use DigitalStar\vk_api\vk_api; // Основной класс
 use DigitalStar\vk_api\Coin; // работа с vkcoins
@@ -34,12 +35,12 @@ Submit();
 function Submit(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    Log::Normal("Bot", "Submit started", path: "bot.log");
+    Log::Normal("Bot", "Submit started", null, "bot.log");
     $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
-    Log::Normal("Bot", "vk created", path: "bot.log");
+    Log::Normal("Bot", "vk created", null, "bot.log");
     $vk->debug();
     $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
-    Log::Normal("Bot", "Vars initialised", path: "bot.log");
+    Log::Normal("Bot", "Vars initialised", null, "bot.log");
     //Log::Normal("Bot", "from_id = ".$data->object->from_id, path: "bot.log");
     //$dbUser = DB::table('vkusers')->WHERE('vkid', $data->object->from_id);
     //Log::Normal("Bot", "Get user from DB", path: "bot.log");
@@ -47,8 +48,8 @@ function Submit(){
         $vk->sendMessage($id, "//Вступительный текст для бесед");
     }
     else if($usersTable->Select(['*'], ['vkid' => $data->object->from_id])->rowCount() > 0){
-        Log::Normal("Bot", "On stage chooser", path: "bot.log");
-        $stage = $vkTable->Select(['stage'], ['vkid' => $data->object->from_id])->fetchAll()['stage'];
+        Log::Normal("Bot", "On stage chooser", null, "bot.log");
+        $stage = $vkTable->Select(['stage'], ['vkid' => $data->object->from_id])->fetchAll()[0]['stage'];
         switch($stage){
             case "AddOrGet":
                 ProcessAddOrGetStage();
@@ -248,7 +249,7 @@ function ProcessGetInfoStage(){
 function ProcessAddOrGetStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    Log::Normal("Bot", "Come in ProcessAddOrGetStage()", path: "bot.log");
+    Log::Normal("Bot", "Come in ProcessAddOrGetStage()", null, "bot.log");
     if($payload){
         if($payload['command'] == 'AddInfo'){
             $vkTable->Update(['stage' => 'AddInfo'], ['vkid' => $data->object->from_id]);
@@ -260,7 +261,7 @@ function ProcessAddOrGetStage(){
         }
     }
     else {
-        Log::Normal("Bot", "Asking, what next: Add or Get", path: "bot.log");
+        Log::Normal("Bot", "Asking, what next: Add or Get", null, "bot.log");
         $add_button = $vk->buttonText('Занести новую информацию', 'blue', ['command' => 'AddInfo']);
         $get_button = $vk->buttonText('Узнать информацию о заданиях', 'blue', ['command' => 'GetInfo']);
         $vk->sendButton($id, "%fn%, что ты хочешь сделать?", [[$add_button], [$get_button]]);
@@ -270,20 +271,20 @@ function ProcessAddOrGetStage(){
 function FIOAuth(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    Log::Normal("Bot", "Come in FIOAuth()", path: "bot.log");
+    Log::Normal("Bot", "Come in FIOAuth()", null, "bot.log");
     $user = $vkTable->Select(['*'], ["vkid" => $data->object->from_id])->fetchAll();
     //$user = $db->Select('vkusers', ['*'], "vkid='".$data->object->from_id."'");
     if($payload){
         if($payload['command'] == 'yesFio'){
             //$currentFio = $dbUser->value('tempFio');
-            $currentFio = $user['tempFio'];
+            $currentFio = $user[0]['tempfio'];
             if(CheckFIO($currentFio)){
                 $fio = explode(' ', $currentFio);
                 $usersTable->Insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id]);
                 //$db->Insert('users', ['name', 'last', 'vkid'], [$fio[0], $fio[1], $data->object->from_id]);
                 //DB::table('users')->insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id]);
                 $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
-                Log::Normal("Bot", "Verified fio, created row in users table", path: "bot.log");
+                Log::Normal("Bot", "Verified fio, created row in users table", null, "bot.log");
                 ProcessAddOrGetStage();
                 /*$dbUser->update(['stage' => "AddOrGet"]);
                 ProcessAddOrGetStage();*/
@@ -294,22 +295,22 @@ function FIOAuth(){
         else
             $vk->sendMessage($id, "Введи свои Имя и Фамилию");
     }
-    else if(count($user) > 0 && $user['stage'] == "Fio"){
+    else if(count($user) > 0 && $user[0]['stage'] == "Fio"){
         $yesFio_button = $vk->buttonText('Да', 'green', ['command' => 'yesFio']);
         $noFio_button = $vk->buttonText('Нет', 'red', ['command' => 'noFio']);
         $vkTable->Update(['tempfio' => $message], ['vkid' => $data->object->from_id]);
-        Log::Normal("Bot", "Sending button to verify true fio", path: "bot.log");
+        Log::Normal("Bot", "Sending button to verify true fio", null, "bot.log");
         $vk->sendButton($id, "Тебя зовут ".$message."?", [[$yesFio_button], [$noFio_button]]);
     }
     else {
-        Log::Normal("Bot", "Sending hello message to new user", path: "bot.log");
+        Log::Normal("Bot", "Sending hello message to new user", null, "bot.log");
         $vk->sendMessage($id, "Привет!\n\nЯ твой персональный бот-помощник по учёбе.\nЯ буду тебя информировать о заданиях с их сроками сдачи и о том, что творится в тоей учебной жизни!\n\nХочешь узнать подробнее?\nНапиши своё Имя и Фамилию.");
-        $vkTable->Update(['stage' => 'Fio'], ['vkid' => $data->object->from_id]);
+        $vkTable->Insert(['vkid' => $data->object->from_id, 'stage' => 'Fio']);
     }
 }
 
 function CheckFIO(string $fio){
-    if(preg_match('/[^а-яА-Я\s]+/msi',$fio))
+    if(!preg_match('/[^а-яА-Я\s]+/msi',$fio))
         return false;
     $fioarr = explode(" ", $fio);
     if(count($fioarr) != 2)
