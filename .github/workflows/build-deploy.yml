@@ -30,7 +30,6 @@ jobs:
       working-directory: ./src
       run: composer install --prefer-dist --no-progress
       
-    - uses: actions/checkout@v2
     - name: Deploy through rsync
       uses: burnett01/rsync-deployments@4.1
       with:
@@ -40,7 +39,6 @@ jobs:
         remote_host: ${{ secrets.DEPLOY_HOST }}
         remote_user: ${{ secrets.DEPLOY_USER }}
         remote_key: ${{ secrets.DEPLOY_KEY }}
-
 
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
