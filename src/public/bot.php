@@ -250,21 +250,19 @@ function ProcessAddOrGetStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
     Log::Normal("Bot", "Come in ProcessAddOrGetStage()", null, "bot.log");
-    if($payload){
-        if($payload['command'] == 'AddInfo'){
-            $vkTable->Update(['stage' => 'AddInfo'], ['vkid' => $data->object->from_id]);
-            ProcessAddInfoStage();
-        }
-        else if ($payload['command'] == 'GetInfo'){
-            $vkTable->Update(['stage' => 'GetInfo'], ['vkid' => $data->object->from_id]);
-            ProcessGetInfoStage();
-        }
+    if($payload['command'] == 'AddInfo'){
+        $vkTable->Update(['stage' => 'AddInfo'], ['vkid' => $data->object->from_id]);
+        ProcessAddInfoStage();
+    }
+    else if ($payload['command'] == 'GetInfo'){
+        $vkTable->Update(['stage' => 'GetInfo'], ['vkid' => $data->object->from_id]);
+        ProcessGetInfoStage();
     }
     else {
         Log::Normal("Bot", "Asking, what next: Add or Get", null, "bot.log");
         $add_button = $vk->buttonText('Занести новую информацию', 'blue', ['command' => 'AddInfo']);
         $get_button = $vk->buttonText('Узнать информацию о заданиях', 'blue', ['command' => 'GetInfo']);
-        $vk->sendButton($id, "%fn%, что ты хочешь сделать?", [[$add_button], [$get_button]]);
+        $vk->sendButton($id, "%a_fn%, что ты хочешь сделать?", [[$add_button], [$get_button]]);
     }
 }
 
