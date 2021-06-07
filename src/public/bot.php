@@ -39,11 +39,8 @@ function Submit(){
     $vk = vk_api::create(VK_KEY, VERSION)->setConfirm(CONFIRM_STR);
     Log::Normal("Bot", "vk created", null, "bot.log");
     $vk->debug();
-    $vk->initVars($id, $message, $payload, $user_id, $type, $data); //инициализация переменных
+    $vk->initVars($id, $message, $payload, $user_id, $type, $data);
     Log::Normal("Bot", "Vars initialised", null, "bot.log");
-    //Log::Normal("Bot", "from_id = ".$data->object->from_id, path: "bot.log");
-    //$dbUser = DB::table('vkusers')->WHERE('vkid', $data->object->from_id);
-    //Log::Normal("Bot", "Get user from DB", path: "bot.log");
     if(isset($data->object->action->type) && $data->object->action->type == 'chat_invite_user'){
         $vk->sendMessage($id, "//Вступительный текст для бесед");
     }
@@ -60,12 +57,12 @@ function Submit(){
             case "GetInfo":
                 ProcessGetInfoStage();
                 break;
-            /*case "NewTask":
+            case "NewTask":
                 ProcessNewTaskStage();
                 break;
             case "CompleteTask":
                 ProcessCompleteTaskStage();
-                break;*/
+                break;
             default:
                 Log::Warning("Bot", "Unknown stage - $stage", __FILE__."-".__LINE__." line");
                 $vk->sendMessage($id, "Произошла ошибка на сервере, пожалуйста повторите запрос");
@@ -77,34 +74,36 @@ function Submit(){
     }
 }
 
-/*function ProcessNewTaskStage(){
-    global $vk, $id, $message, $payload, $user_id, $type, $data, $db;
-    //$tagsNames = DB::table('users')->where('vkid', $data->object->from_id)->value('tags');
-    $tagsNames = $db->Select('users', ['*'], "vkid='".$data->object->from_id."'")['tags'];
+function ProcessNewTaskStage(){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
     $tags = GetTagsByNames($tagsNames);
-    if(is_numeric($message) && intval($message) <= count($tagsNames) && !CheckAddInfo($message)){
-        $taskFields = explode('\n');
-        if(count($taskFields) == 2){
-            $id = DB::table('tasks')->insertGetId([
-                ['title' => $taskFields[0]],
-                ['description' => $taskFields[1]],
-                ['deadline' => $taskFields[2]]
+    $taskFields = explode('\n', $message);
+    if(is_numeric($taskFields[0]) && intval($taskFields[0]) <= count($tagsNames) && CheckAddInfo($message)){
+        if(count($taskFields) == 3){
+            $taskID = $db->InsertGetID('tasks', [
+                'title' => $taskFields[0],
+                'description' => $taskFields[1],
+                'deadline' => $taskFields[2]
             ]);
         }
         else
         {
-            $id = DB::table('tasks')->insertGetId([
-                ['title' => $taskFields[0]],
-                ['description' => $taskFields[1]],
-                ['deadline' => $taskFields[2]],
-                ['link' => $taskFields[3]]
+            $taskID = $db->InsertGetID('tasks', [
+                'title' => $taskFields[0],
+                'description' => $taskFields[1],
+                'deadline' => $taskFields[2],
+                'link' => $taskFields[3]
             ]);
         }
-        $res = DB::table('tags')->where('name', $tagsNames[$message - 1])->value('tasksID');
-        array_push($res, $id);
-        DB::table('tags')->where('name', $tagsNames[$message - 1])->update(['tasksID' => $res]);
+        $res = $db->Select('tags', ['tasksid'], ['name' => $tagsNames[$message - 1]]);
+        $res = $db->FetchPDOStatement($res)[0]['tasksid'];
+        array_push($res, $taskID);
+        $db->Update('tags', ['tasksid' => $res], ['name' => $tagsNames[$message - 1]]);
         $vk->sendMessage($id, 'Задание успешно добавлено!');
-        $dbUser->update(['stage' => 'AddOrGet']);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
     else
@@ -112,33 +111,35 @@ function Submit(){
         $answer = "Введи номер предмета, по которому ты хочешь добавить задание, описание задания, срок сдачи (гггг-мм-дд) и ссылку (если есть) с разделением в виде переноса строки (shift+enter на ПК)";
         $counter = 1;
         foreach($tags as $tag){
-            $answer .= "\n".$counter." - ".$tag->value("nameRU");
+            $answer .= "\n$counter - ".$tag["nameru"];
         }
         $vk->sendMessage($id, $answer);
     }
 }
 
 function CheckAddInfo(string $info){
-    //TODO: Сделать проверку даты либо её преобразование
     $rows = explode('\n', $info);
-    return count($rows) >= 2 && count($rows) <= 3;
+    //TODO: Сделать проверку даты либо её преобразование
+    return count($rows) >= 3 && count($rows) <= 4;
 }
 
 function ProcessCompleteTaskStage(){
-    global $vk, $id, $message, $payload, $user_id, $type, $data, $db;
-    //$tagsNames = DB::table('users')->where('vkid', $data->object->from_id)->value('tags');
-    $tagsNames = $db->Select('users', ['*'], "vkid='".$data->object->from_id."'")['tags'];
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
     $tasks = array();
     foreach($tagsNames as $tagName)
-        array_push($tasks, GetTasksByTag($tagName));
+        array_merge($tasks, GetTasksByTag($tagName));
+    
     if(is_numeric($message) && intval($message) <= count($tasks))
     {
-        //$res = DB::table('users')->where('vkid', $data->object->from_id)->value('completedTasksID');
-        $res = $db->Select('users', ['*'], "vkid='".$data->object->from_id."'")['completedTasksID'];
-        array_push($res, $message);
-        DB::table('users')->where('vkid', $data->object->from_id)->update(['completedTasksID' => $res]);
+        $res = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+        $res = $db->FetchPDOStatement($res)[0]['completedtasksid'];
+        array_push($res, array_keys($tasks)[$message]);
+        $usersTable->Update(['completedtasksid' => $res], ['vkid' => $data->object->from_id]);
         $vk->sendMessage('Задание выполнено, поздравляем!');
-        $dbUser->update(['stage' => 'AddOrGet']);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
     else
@@ -146,23 +147,22 @@ function ProcessCompleteTaskStage(){
         $answer = "Введи номер задания:";
         $counter = 1;
         foreach($tasks as $task){
-            $answer .= "\n".$counter." - ".$tasks;
+            $answer .= "\n$counter - $task";
         }
         $vk->sendMessage($id, $answer);
     }
 }
 
 function ProcessAddInfoStage(){
-    global $vk, $id, $message, $payload, $user_id, $type, $data, $db;
-    if($payload){
-        if($payload['command'] == 'CompleteTask'){
-            $dbUser->update(['stage' => 'CompleteTask']);
-            ProcessCompleteTaskStage();
-        }
-        else if ($payload['command'] == 'NewTask'){
-            $dbUser->update(['stage' => 'NewTask']);
-            ProcessNewTaskStage();
-        }
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    if($payload['command'] == 'CompleteTask'){
+        $vkTable->Update(['stage' => 'CompleteTask'], ['vkid' => $data->object->from_id]);
+        ProcessCompleteTaskStage();
+    }
+    else if ($payload['command'] == 'NewTask'){
+        $vkTable->Update(['stage' => 'NewTask'], ['vkid' => $data->object->from_id]);
+        ProcessNewTaskStage();
     } else
     {
         $completeTask_button = $vk->buttonText('Отметить сделанное задание', 'green', ['command' => 'CompleteTask']);
@@ -172,9 +172,10 @@ function ProcessAddInfoStage(){
 }
 
 function ProcessGetInfoStage(){
-    global $vk, $id, $message, $payload, $user_id, $type, $data, $db;
-    $tagsNames = $db->Select('users', ['*'], "vkid='".$data->object->from_id."'")['tags'];
-    //$tagsNames = DB::table('users')->where('vkid', $data->object->from_id)->value('tags');
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
     $tags = GetTagsByNames($tagsNames);
     if(is_numeric($message) && intval($message) <= count($tagsNames)){
         $tagsNumber = array();
@@ -185,65 +186,63 @@ function ProcessGetInfoStage(){
         else
             array_push($tagNumber, intval($message));
         SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames);
-        $dbUser->update(['stage' => 'AddOrGet']);
+        $usersTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
     else {
         $answer = "Теперь давай решим, что ты хочешь узнать (просто введи цифру предмета):\n0 - Все";
         $counter = 1;
         foreach($tags as $tag){
-            $answer .= "\n".$counter." - ".$tag->value("nameRU");
+            $answer .= "\n$counter - ".$tag["nameru"];
         }
         $vk->sendMessage($id, $answer);
     }
 }
 
 function SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames){
-    global $vk, $id, $message, $payload, $user_id, $type, $data, $db;
-    //TODO: добавить проверку на completed в таблице users
-    //$dbTags = DB::table('tags');
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $completedTasksID = $usersTable->Select(['completedtasksid'], ['vkid' => $data->object->from_id])[0]['completedtasksid'];
     foreach($tagsNumber as $tagNumber){
         $tagName = $tagsNames[$tagNumber - 1];
-        //$tasksID = $dbTags->where('name', $tagName)->value('tasksID');
-        $tasksID = $db->Select('tags', ['*'], "name='".$tagName."'")['tasksID'];
-        foreach($tasksID as $taskID)
-            $vk->sendMessage($id, TaskToString($taskID));
+        //$tasksID = $db->Select('tags', ['*'], "name='".$tagName."'")['tasksID'];
+        $tasksID = $db->Select('tags', ['*'], ["name" => $tagName]);
+        $tasksID = $db->FetchPDOStatement($tasksID)[0]['tasksid'];
+        foreach($tasksID as $taskID){
+            if(!in_array($taskID, $completedTasksID))
+                $vk->sendMessage($id, TaskToString($taskID));
+        }
     }
 }
 
 function GetTasksByTag(string $tag){
-    global $db;
-    //$tasksID = DB::table('tags')->where('name', $tag)->value('tasksID');
-    $tasksID = $db->Select('tags', ['*'], "name='".$tag."'")['tasksID'];
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $tasksID = $db->Select('tags', ['*'], ["name" => $tag]);
+    $tasksID = $db->FetchPDOStatement($tasksID)[0]['tasksid'];
     $result = array();
     foreach($tasksID as $taskID)
-        array_push($result, TaskToString($taskID));
+        $result[$taskID] = TaskToString($taskID);
     return $tasksID;
 }
 
 function TaskToString($taskID){
-    global $db;
-    $task = $db->Select('tasks', ['*'], "ID='".$taskID."'")->fetch_assoc();
-    //$task = DB::table('tasks')->where('ID', $taskID)->first();
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    $task = $db->Select('tasks', ['*'], ['ID' => $taskID])->fetchAll()[0];
     return $task['title']."\n\n".$task['description']."\n\n".$task['deadline']."\n\n".$task['link'];
-    //return $task->title."\n\n".$task->description."\n\n".$task->deadline."\n\n".$task->link;
 }
 
 function GetTagsByNames($tagsNames){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
     $tags = array();
-    $dbTags = DB::table('tags')->get();
     foreach($tagsNames as $tagName){
-        array_push($tags, $dbTags->where('name', $tagName));
+        //array_push($tags, $dbTags->where('name', $tagName));
+        //array_push($tags, $db->Select('tags', ['*'], ['name' => $tagName])->fetchAll());
+        array_push($tags, $db->FetchPDOStatement($db->Select('tags', ['*'], ['name' => $tagName])));
     }
     return $tags;
-}*/
-
-function ProcessAddInfoStage(){
-    SendNotImplemented();
-}
-
-function ProcessGetInfoStage(){
-    SendNotImplemented();
 }
 
 function ProcessAddOrGetStage(){
@@ -271,21 +270,15 @@ function FIOAuth(){
 
     Log::Normal("Bot", "Come in FIOAuth()", null, "bot.log");
     $user = $vkTable->Select(['*'], ["vkid" => $data->object->from_id])->fetchAll();
-    //$user = $db->Select('vkusers', ['*'], "vkid='".$data->object->from_id."'");
     if($payload){
         if($payload['command'] == 'yesFio'){
-            //$currentFio = $dbUser->value('tempFio');
             $currentFio = $user[0]['tempfio'];
             if(CheckFIO($currentFio)){
                 $fio = explode(' ', $currentFio);
                 $usersTable->Insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id]);
-                //$db->Insert('users', ['name', 'last', 'vkid'], [$fio[0], $fio[1], $data->object->from_id]);
-                //DB::table('users')->insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id]);
                 $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
                 Log::Normal("Bot", "Verified fio, created row in users table", null, "bot.log");
                 ProcessAddOrGetStage();
-                /*$dbUser->update(['stage' => "AddOrGet"]);
-                ProcessAddOrGetStage();*/
             }
             else
                 $vk->sendMessage($id, "Введи пожалуйста Имя и Фамилию правильно. Первым - имя, вторым фамилию, через пробел, русскими буквами.");

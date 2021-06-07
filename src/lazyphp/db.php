@@ -79,11 +79,22 @@ class DB {
         $args = array();
         foreach(array_values($values) as $arg){
             if(is_array($arg))
-                array_push($args, "{".implode(", ", $arg)."}");
+                array_push($args, json_encode($arg));
             else
                 array_push($args, $arg);
         }
         return $this->ExecutePrepare($sql, $args)->rowCount();
+    }
+
+
+    /**
+     * Do 'INSERT' request to DB and return id of inserted row.
+     * 
+     * @return int id of inserted row
+     */
+    public function InsertGetID(string $table, array $values) : int{
+        $this->Insert($table, $values);
+        return $this->connection->lastInsertId();
     }
 
     /**
@@ -112,9 +123,9 @@ class DB {
             $sql .= " WHERE ".implode("=? AND ", array_keys($where))."=?";
             foreach(array_values($where) as $arg){
                 if(is_array($arg))
-                array_push($args, "{".implode(", ", $arg)."}");
-            else
-                array_push($args, $arg);
+                    array_push($args, json_encode($arg));
+                else
+                    array_push($args, $arg);
             }
         }
         return $this->ExecutePrepare($sql, $args)->rowCount();
@@ -180,6 +191,15 @@ class DB {
         }
         return $answer;
     }
+
+    public function FetchPDOStatement(PDOStatement $statement) : array{
+        $res = $statement->fetchAll();
+        foreach($res as $key => $row){
+            if($row[0] == '{' && $row[strlen($row) - 1])
+                $res[$key] = json_decode($row);
+        }
+        return $res;
+    }
 }
 
 /**
@@ -211,6 +231,15 @@ class Table {
      */
     public function Insert(array $values) : int{
         return $this->db->Insert($this->name, $values);
+    }
+
+    /**
+     * Do 'INSERT' request to DB and return id of inserted row.
+     * 
+     * @return int id of inserted row
+     */
+    public function InsertGetID(array $values) : int{
+        return $this->db->InsertGetID($this->name, $values);
     }
 
     /**
