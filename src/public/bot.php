@@ -80,22 +80,23 @@ function ProcessNewTaskStage(){
     $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
     $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
     $tags = GetTagsByNames($tagsNames);
-    $taskFields = explode('\n', $message);
-    if(is_numeric($taskFields[0]) && intval($taskFields[0]) <= count($tagsNames) && CheckAddInfo($message)){
+    $taskFields = explode(PHP_EOL, $message);
+    $taskFields = array_map(function($e){return mb_substr($e, 0, strlen($e) - 1);}, $taskFields);
+    if(is_numeric($taskFields[0]) && intval($taskFields[0]) <= count($tagsNames) && CheckAndCorrectAddInfo($message)){
         if(count($taskFields) == 3){
             $taskID = $db->InsertGetID('tasks', [
-                'title' => $taskFields[0],
-                'description' => $taskFields[1],
-                'deadline' => $taskFields[2]
+                'title' => $taskFields[1],
+                'description' => $taskFields[2],
+                'deadline' => $taskFields[3]
             ]);
         }
         else
         {
             $taskID = $db->InsertGetID('tasks', [
-                'title' => $taskFields[0],
-                'description' => $taskFields[1],
-                'deadline' => $taskFields[2],
-                'link' => $taskFields[3]
+                'title' => $taskFields[1],
+                'description' => $taskFields[2],
+                'deadline' => $taskFields[3],
+                'link' => $taskFields[4]
             ]);
         }
         $res = $db->Select('tags', ['tasksid'], ['name' => $tagsNames[$message - 1]]);
@@ -108,17 +109,18 @@ function ProcessNewTaskStage(){
     }
     else
     {
-        $answer = "Введи номер предмета, по которому ты хочешь добавить задание, описание задания, срок сдачи (гггг-мм-дд) и ссылку (если есть) с разделением в виде переноса строки (shift+enter на ПК)";
+        $answer = "Введи номер предмета, по которому ты хочешь добавить задание, заголовок задания, описание, срок сдачи (гггг-мм-дд) и ссылку (если есть) с разделением в виде переноса строки (shift+enter на ПК)";
         $counter = 1;
         foreach($tags as $tag){
             $answer .= "\n$counter - ".$tag["nameru"];
+            $counter += 1;
         }
         $vk->sendMessage($id, $answer);
     }
 }
 
-function CheckAddInfo(string $info){
-    $rows = explode('\n', $info);
+function CheckAndCorrectAddInfo(string $info){
+    $rows = explode(PHP_EOL, $info);
     //TODO: Сделать проверку даты либо её преобразование
     return count($rows) >= 3 && count($rows) <= 4;
 }
@@ -126,19 +128,23 @@ function CheckAddInfo(string $info){
 function ProcessCompleteTaskStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
-    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
+    $tagsNames = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['tags'];
     $tasks = array();
-    foreach($tagsNames as $tagName)
-        array_merge($tasks, GetTasksByTag($tagName));
-    
+    foreach($tagsNames as $tagName){
+        $tagTasks = GetTasksByTag($tagName);
+        $keys = array_merge(array_keys($tasks), array_keys($tagTasks));
+        $values = array_merge($tasks, $tagTasks);
+        $tasks = array_combine($keys, $values);
+    }
+    ksort($tasks);
     if(is_numeric($message) && intval($message) <= count($tasks))
     {
-        $res = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
-        $res = $db->FetchPDOStatement($res)[0]['completedtasksid'];
-        array_push($res, array_keys($tasks)[$message]);
+        $res = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['completedtasksid'];
+        if(is_null($res))
+            $res = array();
+        array_push($res, array_keys($tasks)[$message - 1]);
         $usersTable->Update(['completedtasksid' => $res], ['vkid' => $data->object->from_id]);
-        $vk->sendMessage('Задание выполнено, поздравляем!');
+        $vk->sendMessage($id, 'Задание выполнено, поздравляем!');
         $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
@@ -148,6 +154,7 @@ function ProcessCompleteTaskStage(){
         $counter = 1;
         foreach($tasks as $task){
             $answer .= "\n$counter - $task";
+            $counter += 1;
         }
         $vk->sendMessage($id, $answer);
     }
@@ -174,8 +181,7 @@ function ProcessAddInfoStage(){
 function ProcessGetInfoStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
-    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
+    $tagsNames = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['tags'];
     $tags = GetTagsByNames($tagsNames);
     if(is_numeric($message) && intval($message) <= count($tagsNames)){
         $tagsNumber = array();
@@ -184,9 +190,9 @@ function ProcessGetInfoStage(){
                 array_push($tagsNumber, $i);
         }
         else
-            array_push($tagNumber, intval($message));
+            array_push($tagsNumber, intval($message));
         SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames);
-        $usersTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
     else {
@@ -194,6 +200,7 @@ function ProcessGetInfoStage(){
         $counter = 1;
         foreach($tags as $tag){
             $answer .= "\n$counter - ".$tag["nameru"];
+            $counter += 1;
         }
         $vk->sendMessage($id, $answer);
     }
@@ -201,13 +208,14 @@ function ProcessGetInfoStage(){
 
 function SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
-
-    $completedTasksID = $usersTable->Select(['completedtasksid'], ['vkid' => $data->object->from_id])[0]['completedtasksid'];
+    
+    $temp = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+    $completedTasksID = $db->FetchPDOStatement($temp)[0]['completedtasksid'];
+    if(is_null($completedTasksID))
+        $completedTasksID = array();
     foreach($tagsNumber as $tagNumber){
         $tagName = $tagsNames[$tagNumber - 1];
-        //$tasksID = $db->Select('tags', ['*'], "name='".$tagName."'")['tasksID'];
-        $tasksID = $db->Select('tags', ['*'], ["name" => $tagName]);
-        $tasksID = $db->FetchPDOStatement($tasksID)[0]['tasksid'];
+        $tasksID = $db->FetchPDOStatement($db->Select('tags', ['*'], ["name" => $tagName]))[0]['tasksid'];
         foreach($tasksID as $taskID){
             if(!in_array($taskID, $completedTasksID))
                 $vk->sendMessage($id, TaskToString($taskID));
@@ -218,12 +226,16 @@ function SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames){
 function GetTasksByTag(string $tag){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    $tasksID = $db->Select('tags', ['*'], ["name" => $tag]);
-    $tasksID = $db->FetchPDOStatement($tasksID)[0]['tasksid'];
+    $tasksID = $db->FetchPDOStatement($db->Select('tags', ['*'], ["name" => $tag]))[0]['tasksid'];
+    $completedTasksID = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['completedtasksid'];
+    if(is_null($completedTasksID))
+        $completedTasksID = array();
     $result = array();
-    foreach($tasksID as $taskID)
-        $result[$taskID] = TaskToString($taskID);
-    return $tasksID;
+    foreach($tasksID as $taskID){
+        if(!in_array($taskID, $completedTasksID))
+            $result[$taskID] = TaskToString($taskID);
+    }
+    return $result;
 }
 
 function TaskToString($taskID){
@@ -240,7 +252,7 @@ function GetTagsByNames($tagsNames){
     foreach($tagsNames as $tagName){
         //array_push($tags, $dbTags->where('name', $tagName));
         //array_push($tags, $db->Select('tags', ['*'], ['name' => $tagName])->fetchAll());
-        array_push($tags, $db->FetchPDOStatement($db->Select('tags', ['*'], ['name' => $tagName])));
+        array_push($tags, $db->FetchPDOStatement($db->Select('tags', ['*'], ['name' => $tagName]))[0]);
     }
     return $tags;
 }

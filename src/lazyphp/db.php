@@ -192,11 +192,37 @@ class DB {
         return $answer;
     }
 
+    /**
+     * Fetching PDO answer with postgres arrays
+     * 
+     * @param PDOStatement $statement PDO answer
+     * 
+     * @return array
+     */
     public function FetchPDOStatement(PDOStatement $statement) : array{
-        $res = $statement->fetchAll();
-        foreach($res as $key => $row){
-            if($row[0] == '{' && $row[strlen($row) - 1])
-                $res[$key] = json_decode($row);
+        $fetched = $statement->fetchAll();
+        $res = array();
+        foreach($fetched as $rowkey => $row){
+            $res[$rowkey] = array();
+            foreach($row as $key => $value){
+                if(is_string($value) && $value[0] == '{'){
+                    $res[$rowkey][$key] = $this->ParseSQLArray($value);
+                } else {
+                    $res[$rowkey][$key] = $value;
+                }
+            }
+        }
+        return $res;
+    }
+
+    private function ParseSQLArray(string $sql) : array{
+        $sql = mb_substr($sql, 1, strlen($sql) - 2);
+        $res = array();
+        foreach(explode(',', $sql) as $e){
+            if($e[0] == "'")
+                array_push($res, mb_substr($e, 1, strlen($e) - 2));
+            else
+                array_push($res, $e);
         }
         return $res;
     }
