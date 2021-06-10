@@ -132,6 +132,30 @@ class DB {
     }
 
     /**
+     * Do 'DELETE' request to DB and return count of modified rows.
+     * 
+     * @return int count of modified rows
+     */
+    public function Delete(string $table, array $where = array()) : int{
+        if(empty($table)){
+            Log::Warning("DELETE Request", "No table specified",  __FILE__."-".__LINE__." line");
+            throw new Exception("No table specified");
+        }
+        $sql = "DELETE FROM $table";
+        $args = array();
+        if(count($where) > 0){
+            $sql .= " WHERE ".implode("=? AND ", array_keys($where))."=?";
+            foreach(array_values($where) as $arg){
+                if(is_array($arg))
+                    array_push($args, json_encode($arg));
+                else
+                    array_push($args, $arg);
+            }
+        }
+        return $this->ExecutePrepare($sql, $args)->rowCount();
+    }
+
+    /**
      * Execute SQL request and return PDO answer.
      * ATTENTION: This method does not check request for SQL injection.
      * If you are not shure that arguments of your request are safe, please use 'ExecutePrepare' function.

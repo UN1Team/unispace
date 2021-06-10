@@ -57,8 +57,20 @@ function Submit(){
             case "GetInfo":
                 ProcessGetInfoStage();
                 break;
-            case "NewTask":
-                ProcessNewTaskStage();
+            case "SetNewTaskID":
+                ProcessSetNewTaskIDStage();
+                break;
+            case "SetNewTaskTitle":
+                ProcessSetNewTaskTitleStage();
+                break;
+            case "SetNewTaskDescription":
+                ProcessSetNewTaskDescriptionStage();
+                break;
+            case "SetNewTaskDate":
+                ProcessSetNewTaskDateStage();
+                break;
+            case "SetNewTaskLink":
+                ProcessSetNewTaskLinkStage();
                 break;
             case "CompleteTask":
                 ProcessCompleteTaskStage();
@@ -74,60 +86,158 @@ function Submit(){
     }
 }
 
-function ProcessNewTaskStage(){
+function ProcessSetNewTaskLinkStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
-    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
-    $tags = GetTagsByNames($tagsNames);
-    $taskFields = explode(PHP_EOL, $message);
-    $taskFields = array_map(function($e){return mb_substr($e, 0, strlen($e) - 1);}, $taskFields);
-    if(is_numeric($taskFields[0]) && intval($taskFields[0]) <= count($tagsNames) && CheckAndCorrectAddInfo($message)){
-        if(count($taskFields) == 3){
+    if($payload['command'] == 'GoToStart'){
+        $db->Delete('temptasks', ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
+    if(!empty($message))
+    {
+        $task = $db->FetchPDOStatement($db->Select('temptasks', ['tag', 'title', 'description', 'deadline'], ['vkid' => $data->object->from_id]))[0];
+        if($message == "нет"){
             $taskID = $db->InsertGetID('tasks', [
-                'title' => $taskFields[1],
-                'description' => $taskFields[2],
-                'deadline' => $taskFields[3]
+                'title' => $task['title'],
+                'description' => $task['description'],
+                'deadline' => $task['deadline']
             ]);
         }
         else
         {
             $taskID = $db->InsertGetID('tasks', [
-                'title' => $taskFields[1],
-                'description' => $taskFields[2],
-                'deadline' => $taskFields[3],
-                'link' => $taskFields[4]
+                'title' => $task['title'],
+                'description' => $task['description'],
+                'deadline' => $task['deadline'],
+                'link' => $message
             ]);
         }
-        $res = $db->Select('tags', ['tasksid'], ['name' => $tagsNames[$message - 1]]);
-        $res = $db->FetchPDOStatement($res)[0]['tasksid'];
+        $res = $db->FetchPDOStatement($db->Select('tags', ['tasksid'], ['name' => $task['tag']]))[0]['tasksid'];
         array_push($res, $taskID);
-        $db->Update('tags', ['tasksid' => $res], ['name' => $tagsNames[$message - 1]]);
-        $vk->sendMessage($id, 'Задание успешно добавлено!');
+        $db->Update('tags', ['tasksid' => $res], ['name' => $task['tag']]);
+        $db->Delete('temptasks', ['vkid' => $data->object->from_id]);
+        $vk->sendMessage($id, "Задание успешно добавлено");
         $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
         ProcessAddOrGetStage();
     }
     else
     {
-        $answer = "Введи номер предмета, по которому ты хочешь добавить задание, заголовок задания, описание, срок сдачи (гггг-мм-дд) и ссылку (если есть) с разделением в виде переноса строки (shift+enter на ПК)";
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, "Введи ссылку на задание. Если её нет, то напиши \"нет\"", [[$tostart_button]]);
+    }
+}
+
+function ProcessSetNewTaskDateStage(){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    if($payload['command'] == 'GoToStart'){
+        $db->Delete('temptasks', ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
+    if(!empty($message))
+    {
+        $db->Update('temptasks', ['deadline' => $message], ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'SetNewTaskLink'], ['vkid' => $data->object->from_id]);
+        $vk->sendMessage($id, "Введи ссылку на задание. Если её нет, то напиши \"нет\"");
+    }
+    else
+    {
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, "Введи дату окончания задания (гггг-мм-дд)", [[$tostart_button]]);
+    }
+}
+
+function ProcessSetNewTaskDescriptionStage(){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    if($payload['command'] == 'GoToStart'){
+        $db->Delete('temptasks', ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
+    if(!empty($message))
+    {
+        $db->Update('temptasks', ['description' => $message], ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'SetNewTaskDate'], ['vkid' => $data->object->from_id]);
+        $vk->sendMessage($id, "Введи дату окончания задания (гггг-мм-дд)");
+    }
+    else
+    {
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, "Введи описание задания", [[$tostart_button]]);
+    }
+}
+
+function ProcessSetNewTaskTitleStage(){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    if($payload['command'] == 'GoToStart'){
+        $db->Delete('temptasks', ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
+    if(!empty($message))
+    {
+        $db->Update('temptasks', ['title' => $message], ['vkid' => $data->object->from_id]);
+        $vkTable->Update(['stage' => 'SetNewTaskDescription'], ['vkid' => $data->object->from_id]);
+        $vk->sendMessage($id, "Введи описание задания");
+    }
+    else
+    {
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, "Введи заголовок задания", [[$tostart_button]]);
+    }
+}
+
+function ProcessSetNewTaskIDStage(){
+    global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
+
+    if($payload['command'] == 'GoToStart'){
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
+    $tagsNames = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
+    $tagsNames = $db->FetchPDOStatement($tagsNames)[0]['tags'];
+    $tags = GetTagsByNames($tagsNames);
+    if(is_numeric($message) && intval($message) <= count($tagsNames)){
+        $db->Insert('temptasks', ['vkid' => $data->object->from_id, 'tag' => $tagsNames[$message - 1]]);
+        $vkTable->Update(['stage' => 'SetNewTaskTitle'], ['vkid' => $data->object->from_id]);
+        $vk->sendMessage($id, "Введи заголовок задания");
+    }
+    else
+    {
+        $answer = "Введи номер предмета, по которому ты хочешь добавить задание";
         $counter = 1;
         foreach($tags as $tag){
             $answer .= "\n$counter - ".$tag["nameru"];
             $counter += 1;
         }
-        $vk->sendMessage($id, $answer);
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, $answer, [[$tostart_button]]);
     }
 }
 
 function CheckAndCorrectAddInfo(string $info){
     $rows = explode(PHP_EOL, $info);
     //TODO: Сделать проверку даты либо её преобразование
-    return count($rows) >= 3 && count($rows) <= 4;
+    return count($rows) >= 4 && count($rows) <= 5;
 }
 
 function ProcessCompleteTaskStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
+    if($payload['command'] == 'GoToStart'){
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
     $tagsNames = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['tags'];
     $tasks = array();
     foreach($tagsNames as $tagName){
@@ -156,31 +266,43 @@ function ProcessCompleteTaskStage(){
             $answer .= "\n$counter - $task";
             $counter += 1;
         }
-        $vk->sendMessage($id, $answer);
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, $answer, [[$tostart_button]]);
     }
 }
 
 function ProcessAddInfoStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
+    if($payload['command'] == 'GoToStart'){
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
     if($payload['command'] == 'CompleteTask'){
         $vkTable->Update(['stage' => 'CompleteTask'], ['vkid' => $data->object->from_id]);
         ProcessCompleteTaskStage();
     }
     else if ($payload['command'] == 'NewTask'){
-        $vkTable->Update(['stage' => 'NewTask'], ['vkid' => $data->object->from_id]);
-        ProcessNewTaskStage();
+        $vkTable->Update(['stage' => 'SetNewTaskID'], ['vkid' => $data->object->from_id]);
+        ProcessSetNewTaskIDStage();
     } else
     {
         $completeTask_button = $vk->buttonText('Отметить сделанное задание', 'green', ['command' => 'CompleteTask']);
         $newTask_button = $vk->buttonText('Добавить в список новое задание', 'blue', ['command' => 'NewTask']);
-        $vk->sendButton($id, "Давай решим, что ты хочешь сделать дальше", [[$completeTask_button], [$newTask_button]]);
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, "Давай решим, что ты хочешь сделать дальше", [[$completeTask_button], [$newTask_button], [$tostart_button]]);
     }
 }
 
 function ProcessGetInfoStage(){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
+    if($payload['command'] == 'GoToStart'){
+        $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
+        ProcessAddOrGetStage();
+        return;
+    }
     $tagsNames = $db->FetchPDOStatement($usersTable->Select(['*'], ['vkid' => $data->object->from_id]))[0]['tags'];
     $tags = GetTagsByNames($tagsNames);
     if(is_numeric($message) && intval($message) <= count($tagsNames)){
@@ -202,7 +324,8 @@ function ProcessGetInfoStage(){
             $answer .= "\n$counter - ".$tag["nameru"];
             $counter += 1;
         }
-        $vk->sendMessage($id, $answer);
+        $tostart_button = $vk->buttonText('Вернуться в начало', 'red', ['command' => 'GoToStart']);
+        $vk->sendButton($id, $answer, [[$tostart_button]]);
     }
 }
 
@@ -211,16 +334,21 @@ function SendTasksByTagsNumberWithoutCompleted($tagsNumber, $tagsNames){
     
     $temp = $usersTable->Select(['*'], ['vkid' => $data->object->from_id]);
     $completedTasksID = $db->FetchPDOStatement($temp)[0]['completedtasksid'];
+    $hasTask = false;
     if(is_null($completedTasksID))
         $completedTasksID = array();
     foreach($tagsNumber as $tagNumber){
         $tagName = $tagsNames[$tagNumber - 1];
         $tasksID = $db->FetchPDOStatement($db->Select('tags', ['*'], ["name" => $tagName]))[0]['tasksid'];
         foreach($tasksID as $taskID){
-            if(!in_array($taskID, $completedTasksID))
+            if(!in_array($taskID, $completedTasksID)){
                 $vk->sendMessage($id, TaskToString($taskID));
+                $hasTask = true;
+            }
         }
     }
+    if(!$hasTask)
+        $vk->sendMessage($id, "У тебя нет нерешённых заданий");
 }
 
 function GetTasksByTag(string $tag){
@@ -241,7 +369,7 @@ function GetTasksByTag(string $tag){
 function TaskToString($taskID){
     global $vk, $id, $message, $payload, $user_id, $type, $data, $db, $usersTable, $vkTable;
 
-    $task = $db->Select('tasks', ['*'], ['ID' => $taskID])->fetchAll()[0];
+    $task = $db->FetchPDOStatement($db->Select('tasks', ['*'], ['ID' => $taskID]))[0];
     return $task['title']."\n\n".$task['description']."\n\n".$task['deadline']."\n\n".$task['link'];
 }
 
@@ -271,7 +399,7 @@ function ProcessAddOrGetStage(){
     }
     else {
         Log::Normal("Bot", "Asking, what next: Add or Get", null, "bot.log");
-        $add_button = $vk->buttonText('Занести новую информацию', 'blue', ['command' => 'AddInfo']);
+        $add_button = $vk->buttonText('Занести новую информацию', 'green', ['command' => 'AddInfo']);
         $get_button = $vk->buttonText('Узнать информацию о заданиях', 'blue', ['command' => 'GetInfo']);
         $vk->sendButton($id, "%a_fn%, что ты хочешь сделать?", [[$add_button], [$get_button]]);
     }
@@ -287,7 +415,7 @@ function FIOAuth(){
             $currentFio = $user[0]['tempfio'];
             if(CheckFIO($currentFio)){
                 $fio = explode(' ', $currentFio);
-                $usersTable->Insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id]);
+                $usersTable->Insert(['name' => $fio[0], 'last' => $fio[1], 'vkid' => $data->object->from_id, 'tags' => ["DGM", "physic"]]);
                 $vkTable->Update(['stage' => 'AddOrGet'], ['vkid' => $data->object->from_id]);
                 Log::Normal("Bot", "Verified fio, created row in users table", null, "bot.log");
                 ProcessAddOrGetStage();
@@ -313,6 +441,8 @@ function FIOAuth(){
 }
 
 function CheckFIO(string $fio){
+    if(count(explode(" ", $fio)) != 2)
+        return false;
     if(!preg_match('/[^а-яА-Я\s]+/msi',$fio))
         return false;
     $fioarr = explode(" ", $fio);
