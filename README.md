@@ -4,6 +4,8 @@
   <a href="https://vk.com/un1teamgroup"><img src="https://badgen.net/badge/VK/group/2787F5" alt="VK"></a>
   <a href="https://discord.gg/wj6wZfrXBt"><img src="https://badgen.net/badge/Discord/join-us/7289DA" alt="Discord"></a>
   <a href="http://unispace.ai-info.ru"><img src="https://badgen.net/badge/Website/active/green" alt="Website"></a>
+  <a href="https://urfume-my.sharepoint.com/:w:/g/personal/dmitry_oplachko_urfu_me/EUW1X6HNkz9Pqter_1h0Z34B0R4SnIIM_Rzbat9QolRXVg?e=kl60xC"><img src="https://badgen.net/badge/Report/LINK/purple" alt="Report"></a>
+<a href="https://urfume-my.sharepoint.com/:p:/g/personal/dmitry_oplachko_urfu_me/EWo4Orjsw4hDv8IKbX12GlEBjS04Kd535xR7WtMBPbm9vg?e=TNe5XP"><img src="https://badgen.net/badge/Presentation/LINK/red" alt="Presentation"></a>
  </p>
 
 <p align="center">
