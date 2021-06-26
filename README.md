@@ -1,11 +1,11 @@
 <p align="center"><a href="https://github.com/UN1Team/unispace"><img align="center" style="width:320px" src="./.github/img/uni.png" alt="Uni"/></a></p><br/>
 <p align="center">
-  <a href=""><img src="https://badgen.net/npm/license/nuxt" alt="License"></a>
-  <a href="https://vk.com/un1teamgroup"><img src="https://badgen.net/badge/VK/group/2787F5" alt="VK"></a>
-  <a href="https://discord.gg/wj6wZfrXBt"><img src="https://badgen.net/badge/Discord/join-us/7289DA" alt="Discord"></a>
-  <a href="http://unispace.ai-info.ru"><img src="https://badgen.net/badge/Website/active/green" alt="Website"></a>
-  <a href="https://urfume-my.sharepoint.com/:w:/g/personal/dmitry_oplachko_urfu_me/EUW1X6HNkz9Pqter_1h0Z34B0R4SnIIM_Rzbat9QolRXVg?e=kl60xC"><img src="https://badgen.net/badge/Report/LINK/purple" alt="Report"></a>
-<a href="https://urfume-my.sharepoint.com/:p:/g/personal/dmitry_oplachko_urfu_me/EWo4Orjsw4hDv8IKbX12GlEBjS04Kd535xR7WtMBPbm9vg?e=TNe5XP"><img src="https://badgen.net/badge/Presentation/LINK/red" alt="Presentation"></a>
+  <a href="https://github.com/UN1Team/unispace/blob/main/LICENSE.md"><img src="https://badgen.net/badge/Лицензия/MIT/blue" alt="License"></a>
+  <a href="https://vk.com/un1teamgroup"><img src="https://badgen.net/badge/VK/группа/2787F5" alt="VK"></a>
+  <a href="https://discord.gg/wj6wZfrXBt"><img src="https://badgen.net/badge/Discord/канал/7289DA" alt="Discord"></a>
+  <a href="http://unispace.ai-info.ru"><img src="https://badgen.net/badge/Сервер/активен/green" alt="Website"></a>
+  <a href="https://urfume-my.sharepoint.com/:w:/g/personal/dmitry_oplachko_urfu_me/EUW1X6HNkz9Pqter_1h0Z34B0R4SnIIM_Rzbat9QolRXVg?e=kl60xC"><img src="https://badgen.net/badge/Отчёт/проекта/purple" alt="Report"></a>
+<a href="https://urfume-my.sharepoint.com/:p:/g/personal/dmitry_oplachko_urfu_me/EWo4Orjsw4hDv8IKbX12GlEBjS04Kd535xR7WtMBPbm9vg?e=TNe5XP"><img src="https://badgen.net/badge/Презентация/ссылка/red" alt="Presentation"></a>
  </p>
 
 <p align="center">
@@ -28,8 +28,8 @@
 > Формат приложения - Веб-сервис
 
 ## Описание:
-   Веб-сервис, который взаимодействует с api различных платформ (VK, Telegram),
-   чтобы собирать, аггрегировать и структурированно выдавать актуальную информацию о заданиях и онлайн-курсах
+   Веб-сервис, который взаимодействует с api VK (чат-бот),
+   чтобы собирать, агрегировать и выдавать актуальную информацию о заданиях и онлайн-курсах студенту
 
 ## Целевая аудитория:
    Студенты 1-го курса ИРИТ-РТФ, обучающиеся по индивидуальным образовательным траекториям (ИОТ)
@@ -40,64 +40,30 @@
    - Снижается вероятность пропустить информацию о важном задании, которое оказыват влияние на оценку. Повышение успеваемости студентов.
 
 ## Технологический cтек продукта / MVP:
-   GNU/Linux - Ngnix - PostgreSQL - PHP - Laravel
+   GNU/Linux - Ngnix - PostgreSQL - PHP
 
 ## Алгоритм работы с MVP:
-   Перейдите в наше <a href="https://vk.com/un1teamgroup">сообщество ВК</a>
-   <br>
-   Там будут подробное описание, как работать с ботом.
+   - Перейдите в наше <a href="https://vk.com/un1teamgroup">сообщество ВК</a>
+   - Откройте чат с сообществом
+   - Напишите что-нибудь
+   - Поздравляем! С вами общается робот 🤖
 
 ## MVP:
-   - Построено веб-приложение на фреймворке Laravel с нужными модулями
-   - Реализовано базовое взаимодействие с vk api
-   - Реализована запись/чтение данных с базы посредством vk бота
+   - Настроена работа с VK api
+   - Реализована запись данных в базу посредством диалога с пользоателем
+   - Вывод данных пользователю как по всем категориям, так и для каждой
+   - Возможность отмечать выполненные задания
 
 ## Основные требования:
    - Любой браузер, который может открывать [ВК](https://vk.com)
    - Аккаут в [ВК](https://vk.com)
 
-<!--
-## Основные требования:
-   - [Apache HTTP server](https://httpd.apache.org/) или [NGNIX](https://www.nginx.com/) любой версии
-   - [PostgreSQL v9.x.x и выше](https://www.postgresql.org/)
-   - [PHP v7.x и выше](https://www.php.net/)
-   - [Composer v2.x и выше](https://getcomposer.org/)
-   - [Laravel v8.x и выше](https://laravel.com)
--->
+## Структура репозитория:
+   - ./src - исходный код проекта
+   - ./README.MD - этот файл README
+   - ./LICENSE.MD - файл с лицензией
 
-<!-- ## Порядок установки:
-  1. Склонировать репозиторий
- ```sh
-  $ git clone https://github.com/UN1Team/unispace.git
- ```
-  2. Перейти в папку с исходным кодом
-  ```sh
-  $ cd unispace/src/
- ```
-  3. Установить зависимости composer
-  ```sh
-  $ composer install
- ```
-  4. Установить зависимости npm
-  ```sh
-  $ npm install
-  ```
-  Или, используя yarn:
-  ```sh
-  $ yarn
-  ```
-  5. Создайте файл .env из .env.example
-  ```sh
-  $ cp .env.example .env
-  ```
-  6. Сгенерируйте ваш ключ шифрования -->
-
-## Структура приложения:
-
- ./src - исходный код проекта
-  <br>
- ./README.MD - этот файл README
-  <br>
- ./LICENSE.MD - файл с лицензией
-  <br>
- ./report.docx - отчёт по проекту
+## Ссылки:
+  - [наша группа вконтакте](https://vk.com/un1teamgroup)
+  - [отчёт по проекту](https://urfume-my.sharepoint.com/:w:/g/personal/dmitry_oplachko_urfu_me/EUW1X6HNkz9Pqter_1h0Z34B0R4SnIIM_Rzbat9QolRXVg?e=kl60xC)
+  - [презентация к защите](https://urfume-my.sharepoint.com/:p:/g/personal/dmitry_oplachko_urfu_me/EWo4Orjsw4hDv8IKbX12GlEBjS04Kd535xR7WtMBPbm9vg?e=TNe5XP)
